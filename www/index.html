@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0e14">
+<title>Kalorim</title>
+<style>html{background:#0d0e14;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: tek sütunlu telefon uygulaması. Üstte kalori halkası, altında makrolar, su ve öğünler. Altta sabit gezinme çubuğu ve yüzen ekle düğmesi. */
+:root{
+  --bg:#0d0e14; --s1:#161823; --s2:#202333; --line:#2b2f44;
+  --fg:#f3f2f8; --mute:#9b9eb7;
+  --ember:#ff7a45; --rose:#ff3d7f;
+  --pro:#4cc9f0; --carb:#ffc857; --fat:#b794ff;
+  --ok:#5ee6a8; --bad:#ff5d6c;
+  --display:'Unbounded','Trebuchet MS',system-ui,sans-serif;
+  --body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:500 15px/1.45 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--pro);outline-offset:2px;border-radius:8px}
+h1,h2,h3,p{margin:0}
+.app{max-width:480px;margin:0 auto;position:relative;padding-bottom:140px}
+.glow{position:absolute;left:0;right:0;top:0;height:380px;pointer-events:none;background:radial-gradient(60% 70% at 50% 0%,rgba(255,80,100,.22),transparent 72%),radial-gradient(40% 50% at 90% 8%,rgba(183,148,255,.16),transparent 70%)}
+.app>*{position:relative}
+.glow{position:absolute!important}
+
+/* header */
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-top:18px}
+.hello{color:var(--mute);font-weight:600;font-size:14px}
+.datenav{display:flex;align-items:center;gap:6px;margin-top:2px}
+.datenav h1{font:700 21px/1.2 var(--display);letter-spacing:-.01em;min-width:0}
+.ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--mute);background:var(--s1);border:1px solid var(--line);transition:transform .2s,color .2s,opacity .2s}
+.ic:active{transform:scale(.88)}
+.ic[disabled]{opacity:.25;pointer-events:none}
+.top.plain .ic{display:none}
+.streak{display:flex;align-items:center;gap:6px;background:var(--s1);border:1px solid var(--line);border-radius:99px;padding:7px 12px 7px 9px;font-size:13px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.streak span{color:var(--mute);font-weight:600}
+.flame{width:20px;height:20px;transform-origin:50% 100%;animation:flick 1.6s ease-in-out infinite}
+@keyframes flick{0%,100%{transform:scale(1) rotate(-3deg)}30%{transform:scale(1.12,1.2) rotate(3deg)}60%{transform:scale(.96,1.05) rotate(-2deg)}}
+
+/* views */
+.view{display:flex;flex-direction:column;gap:22px;padding-top:12px}
+.view>*{animation:rise .65s cubic-bezier(.2,.8,.2,1) both}
+.view>*:nth-child(2){animation-delay:.06s}.view>*:nth-child(3){animation-delay:.12s}.view>*:nth-child(4){animation-delay:.18s}.view>*:nth-child(5){animation-delay:.24s}.view>*:nth-child(6){animation-delay:.3s}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+.sample{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--mute);background:var(--s1);border:1px dashed var(--line);border-radius:14px;padding:8px 8px 8px 14px}
+.sample button{background:var(--s2);border-radius:10px;padding:6px 12px;font-weight:700;font-size:13px}
+
+/* ring */
+.ringwrap{width:min(74vw,268px);margin:4px auto 0;position:relative}
+.ring{display:block;width:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:15}
+.ring .trk{stroke:var(--s2)}
+.ring .prg{stroke-linecap:round;stroke-dasharray:578.05;stroke-dashoffset:578.05;transition:stroke-dashoffset 1.5s cubic-bezier(.2,.8,.2,1),opacity .3s;filter:drop-shadow(0 0 9px rgba(255,90,90,.55))}
+.ringwrap.over .prg{stroke:var(--bad)}
+.rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center}
+.rl{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:700}
+.rn{font:700 clamp(38px,12vw,50px)/1.05 var(--display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.rg{color:var(--mute);font-size:14px;font-weight:600}
+.remain{text-align:center;margin-top:14px;font-size:15px;color:var(--mute)}
+.remain b{font:700 17px var(--display);color:var(--fg);font-variant-numeric:tabular-nums;margin-right:4px}
+.remain.over b{color:var(--bad)}
+
+/* macros */
+.macros{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mac{min-width:0}
+.ml{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.ml::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.mac p{margin:6px 0 8px;white-space:nowrap}
+.mac b{font:700 19px var(--display);font-variant-numeric:tabular-nums}
+.mac small{color:var(--mute);font-weight:600;font-size:12px;margin-left:3px}
+.bar{height:7px;border-radius:99px;background:var(--s2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;background:var(--c);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+
+/* water */
+.water{background:var(--s1);border:1px solid var(--line);border-radius:22px;padding:16px}
+.wh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.wh h2,.sec h2{font:700 13px var(--display);letter-spacing:.02em}
+.wh span{color:var(--mute);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.cups{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.cup{aspect-ratio:3/5;position:relative;border:1.5px solid var(--line);border-radius:6px 6px 13px 13px;overflow:hidden;background:var(--bg);transition:transform .25s,border-color .3s}
+.cup:active{transform:scale(.9)}
+.cup.on{border-color:rgba(76,201,240,.6)}
+.cup i{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#59d0f5,#2a78d4);transition:height .7s cubic-bezier(.3,1.5,.4,1)}
+.cup.on i{height:84%}
+.cup i::before{content:"";position:absolute;left:-60%;top:-7px;width:220%;height:14px;border-radius:42%;background:#7adcf9;animation:wave 2.6s linear infinite}
+@keyframes wave{to{transform:translateX(27%)}}
+
+/* meals */
+.meal{padding-top:4px}
+.mh{display:flex;align-items:center;gap:10px;padding:10px 0}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mh h3{font:700 15px var(--body);flex:1;min-width:0}
+.ms{color:var(--mute);font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.ic.sm{width:30px;height:30px}
+.item{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);transition:opacity .3s,transform .3s,max-height .35s .1s,padding .35s .1s;max-height:90px;overflow:hidden}
+.item.new{animation:slide .55s cubic-bezier(.2,1.2,.3,1) both}
+.item.out{opacity:0;transform:translateX(60px);max-height:0;padding-block:0}
+@keyframes slide{from{opacity:0;transform:translateX(-30px) scale(.96);background:rgba(255,122,69,.18)}to{opacity:1;transform:none;background:transparent}}
+.em{width:42px;height:42px;border-radius:14px;background:var(--s1);border:1px solid var(--line);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.im{flex:1;min-width:0}
+.im b{display:block;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.im small{color:var(--mute);font-size:12px;font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ik{font:700 15px var(--display);font-variant-numeric:tabular-nums}
+.del{width:28px;height:28px;border-radius:50%;color:var(--mute);font-size:20px;line-height:1;transition:color .2s,background .2s}
+.del:hover,.del:active{color:var(--bad);background:rgba(255,93,108,.12)}
+.empty{width:100%;text-align:left;border-top:1px solid var(--line);padding:12px 0;color:var(--mute);font-size:13px;font-weight:600}
+
+/* week */
+.plot{--lab:28px;position:relative;height:230px;background:var(--s1);border:1px solid var(--line);border-radius:22px;padding:22px 12px 0}
+.cols{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:100%}
+.col{display:flex;flex-direction:column;min-width:0}
+.track{flex:1;position:relative}
+.bar2{position:absolute;left:16%;right:16%;bottom:0;height:var(--h);border-radius:10px 10px 4px 4px;background:linear-gradient(var(--ember),var(--rose));animation:grow 1s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*70ms);box-shadow:0 0 16px rgba(255,80,100,.25)}
+.bar2.over{background:linear-gradient(#ff8a8a,var(--bad))}
+.bar2.none{background:var(--s2);box-shadow:none;height:4px}
+@keyframes grow{from{height:0}}
+.val{position:absolute;left:-6px;right:-6px;text-align:center;bottom:calc(var(--h) + 5px);font-size:10.5px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums;animation:fade .6s .7s both}
+@keyframes fade{from{opacity:0}}
+.lbl{height:var(--lab);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--mute)}
+.col.today .lbl{color:var(--fg)}
+.goalline{position:absolute;left:12px;right:12px;bottom:calc(var(--lab) + (100% - var(--lab) - 22px) * var(--r));border-top:1.5px dashed rgba(255,200,87,.55);pointer-events:none}
+.goalline span{position:absolute;right:0;top:-18px;font-size:10.5px;font-weight:700;color:var(--carb);background:var(--s1);padding:0 4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:14px 12px;min-width:0}
+.stat b{display:block;font:700 20px var(--display);font-variant-numeric:tabular-nums}
+.stat small{color:var(--mute);font-weight:600;font-size:12px}
+.hint{color:var(--mute);font-size:13px}
+
+/* profile */
+.sec h2{margin-bottom:12px}
+.goalbox{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--s1);border:1px solid var(--line);border-radius:22px;padding:16px}
+.goalbox .lab{font-weight:700;color:var(--mute);font-size:13px}
+.gstep{display:flex;align-items:center;gap:12px}
+.gstep b{font:700 26px var(--display);min-width:3.4ch;text-align:center;font-variant-numeric:tabular-nums}
+.gunit{color:var(--mute);font-weight:700}
+.form{display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:var(--mute);letter-spacing:.04em;text-transform:uppercase;min-width:0}
+input,select{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;font-weight:600;width:100%;min-width:0;letter-spacing:0;text-transform:none;color:var(--fg)}
+input:focus,select:focus{outline:none;border-color:var(--pro)}
+input.shake{animation:shake .4s;border-color:var(--bad)}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.seg button{padding:10px;border-radius:10px;font-weight:700;color:var(--mute);transition:background .25s,color .25s}
+.seg button.on{background:var(--s2);color:var(--fg)}
+.btn{background:linear-gradient(135deg,var(--ember),var(--rose));color:#fff;font-weight:800;border-radius:16px;padding:14px 18px;box-shadow:0 8px 22px -8px rgba(255,60,110,.7);transition:transform .2s}
+.btn:active{transform:scale(.97)}
+.btn.wide{width:100%}
+.btn.ghost{background:var(--s1);border:1px solid var(--line);box-shadow:none;color:var(--fg);font-weight:700}
+.btn.danger{color:var(--bad)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calcinfo{color:var(--mute);font-size:13px;min-height:1.4em}
+.note{color:var(--mute);font-size:12.5px;margin-top:10px}
+
+/* dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);pointer-events:none}
+.dockin{max-width:480px;margin:0 auto;position:relative}
+.nav{pointer-events:auto;display:grid;grid-template-columns:repeat(3,1fr);background:rgba(22,24,35,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:24px;padding:6px;margin-right:76px}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-radius:18px;color:var(--mute);font-size:11.5px;font-weight:700;transition:color .25s,background .25s}
+.nav button.on{color:var(--fg);background:var(--s2)}
+.nav button.on svg{color:var(--ember);transform:translateY(-1px) scale(1.1)}
+.nav svg{transition:transform .35s cubic-bezier(.3,1.6,.4,1),color .25s}
+.fab{pointer-events:auto;position:absolute;right:0;bottom:0;width:64px;height:64px;border-radius:22px;background:linear-gradient(135deg,var(--ember),var(--rose));color:#fff;display:grid;place-items:center;box-shadow:0 10px 26px -6px rgba(255,60,110,.8);transition:transform .3s cubic-bezier(.3,1.6,.4,1)}
+.fab::after{content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid var(--rose);animation:pulse 2.4s ease-out infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+.fab:active{transform:scale(.9) rotate(90deg)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(5,5,10,.6);opacity:0;pointer-events:none;transition:opacity .35s;z-index:39}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;z-index:40;background:var(--s1);border:1px solid var(--line);border-bottom:0;border-radius:28px 28px 0 0;max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;transform:translateY(105%);visibility:hidden;transition:transform .5s cubic-bezier(.2,.9,.25,1),visibility 0s .5s;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.open{transform:none;visibility:visible;transition-delay:0s}
+.shead{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 8px}
+.shead h2{font:700 18px var(--display)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 18px 10px;scrollbar-width:none}
+.chip{flex-shrink:0;padding:8px 14px;border-radius:99px;border:1px solid var(--line);font-weight:700;font-size:13px;color:var(--mute);background:var(--bg);transition:all .25s}
+.chip.on{color:#fff;border-color:transparent;background:var(--c)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;margin:0 18px 10px}
+.sbody{overflow-y:auto;flex:1;min-height:0;padding:0 18px 12px}
+.sbody input{margin-bottom:8px}
+.frow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:9px 8px;border-radius:14px;transition:background .2s}
+.frow.on{background:var(--s2)}
+.frow .em{width:38px;height:38px;font-size:20px;border-radius:12px;background:var(--bg)}
+.frow .ik{font-size:13px}
+.frow small{color:var(--mute)}
+.sfoot{border-top:1px solid var(--line);padding:12px 18px 14px;display:flex;align-items:center;gap:12px;animation:rise .35s both}
+.sfoot .who{flex:1;min-width:0}
+.sfoot .who b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sfoot .who small{color:var(--mute);font-weight:600}
+.qty{display:flex;align-items:center;gap:8px}
+.qty b{min-width:2.4ch;text-align:center;font:700 15px var(--display)}
+.cf{display:flex;flex-direction:column;gap:12px;padding-top:4px}
+
+.fly{position:fixed;left:0;top:0;font-size:30px;margin:-15px 0 0 -15px;pointer-events:none;z-index:80;will-change:transform}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:90}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);transform:translate(-50%,30px);opacity:0;background:var(--s2);border:1px solid var(--line);padding:11px 18px;border-radius:16px;font-weight:700;font-size:14px;z-index:95;max-width:calc(100vw - 32px);text-align:center;transition:all .4s cubic-bezier(.2,1.2,.3,1);pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}}
+</style>
+
+<div class="app">
+  <div class="glow"></div>
+
+  <header class="top" id="top">
+    <div>
+      <p class="hello" id="hello"></p>
+      <div class="datenav">
+        <button class="ic" data-act="prev" aria-label="Önceki gün"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h1 id="dlabel">Bugün</h1>
+        <button class="ic" data-act="next" id="nextBtn" aria-label="Sonraki gün"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+    <div class="streak" title="Üst üste kayıt girilen gün sayısı">
+      <svg class="flame" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="fg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color:var(--rose)"/><stop offset="1" style="stop-color:var(--carb)"/></linearGradient></defs><path fill="url(#fg)" d="M12.2 1.5c.6 4 4.8 6.2 4.8 11.4a5.2 5.2 0 0 1-10.4 0c0-2.1 1-3.5 2.3-4.6.1 1.9 1 2.9 2 3.2-.4-3.9-.6-6.3 1.3-10z"/></svg>
+      <b id="sn">0</b><span>gün</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="v-today" class="view">
+      <div class="sample" id="sample"><span>Örnek veriler gösteriliyor</span><button data-act="clear-sample">Temizle</button></div>
+
+      <div>
+        <div class="ringwrap" id="ringwrap">
+          <svg class="ring" viewBox="0 0 220 220" aria-hidden="true">
+            <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--carb)"/><stop offset=".5" style="stop-color:var(--ember)"/><stop offset="1" style="stop-color:var(--rose)"/></linearGradient></defs>
+            <circle class="trk" cx="110" cy="110" r="92"/>
+            <circle class="prg" id="prg" cx="110" cy="110" r="92" stroke="url(#rg)"/>
+          </svg>
+          <div class="rc"><span class="rl">alınan</span><b class="rn" id="eaten" data-v="0">0</b><span class="rg">/ <span id="goal">2.200</span> kcal</span></div>
+        </div>
+        <p class="remain" id="remain"></p>
+      </div>
+
+      <div class="macros">
+        <div class="mac" style="--c:var(--pro)"><span class="ml">Protein</span><p><b id="v-p">0</b><small id="g-p"></small></p><div class="bar"><i id="b-p"></i></div></div>
+        <div class="mac" style="--c:var(--carb)"><span class="ml">Karb.</span><p><b id="v-c">0</b><small id="g-c"></small></p><div class="bar"><i id="b-c"></i></div></div>
+        <div class="mac" style="--c:var(--fat)"><span class="ml">Yağ</span><p><b id="v-f">0</b><small id="g-f"></small></p><div class="bar"><i id="b-f"></i></div></div>
+      </div>
+
+      <div class="water">
+        <div class="wh"><h2>Su</h2><span id="wtxt"></span></div>
+        <div class="cups" id="cups"></div>
+      </div>
+
+      <div id="meals"></div>
+    </section>
+
+    <section id="v-week" class="view" hidden>
+      <div class="plot" id="plot"></div>
+      <div class="stats" id="stats"></div>
+      <p class="hint">Bir sütuna dokunarak o günün kayıtlarına gidebilirsin.</p>
+    </section>
+
+    <section id="v-me" class="view" hidden>
+      <div class="goalbox">
+        <span class="lab">Günlük hedef</span>
+        <div class="gstep">
+          <button class="ic" data-act="gminus" aria-label="Hedefi azalt">−</button>
+          <b id="mgoal">2.200</b>
+          <button class="ic" data-act="gplus" aria-label="Hedefi artır">+</button>
+        </div>
+        <span class="gunit">kcal</span>
+      </div>
+
+      <div class="sec">
+        <h2>Hedefini hesapla</h2>
+        <div class="form">
+          <div class="seg" id="sex"><button data-sex="m">Erkek</button><button data-sex="f">Kadın</button></div>
+          <div class="grid3">
+            <label for="pa">Yaş<input id="pa" type="number" inputmode="numeric" min="14" max="99"></label>
+            <label for="ph">Boy (cm)<input id="ph" type="number" inputmode="numeric" min="120" max="230"></label>
+            <label for="pw">Kilo (kg)<input id="pw" type="number" inputmode="decimal" min="30" max="250"></label>
+          </div>
+          <label for="pact">Aktivite
+            <select id="pact">
+              <option value="1.2">Hareketsiz (masa başı)</option>
+              <option value="1.375">Hafif aktif (haftada 1-3 spor)</option>
+              <option value="1.55">Orta aktif (haftada 3-5 spor)</option>
+              <option value="1.725">Çok aktif (haftada 6-7 spor)</option>
+            </select>
+          </label>
+          <label for="paim">Amaç
+            <select id="paim">
+              <option value="-500">Kilo vermek</option>
+              <option value="0">Kiloyu korumak</option>
+              <option value="400">Kilo almak</option>
+            </select>
+          </label>
+          <button class="btn wide" data-act="calc">Hedefi hesapla</button>
+          <p class="calcinfo" id="calcinfo"></p>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h2>Veriler</h2>
+        <div class="row2">
+          <button class="btn ghost" data-act="clear-sample">Örnekleri temizle</button>
+          <button class="btn ghost danger" data-act="reset" id="resetBtn">Hepsini sıfırla</button>
+        </div>
+        <p class="note">Kayıtlar bu cihazdaki tarayıcıda saklanır.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="dock">
+    <div class="dockin">
+      <nav class="nav" aria-label="Ana gezinme">
+        <button data-tab="today" class="on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6"/></svg>Bugün</button>
+        <button data-tab="week"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 20v-9M12 20V4M18 20v-6"/></svg>Hafta</button>
+        <button data-tab="me"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c1-4 4-6 8-6s7 2 8 6"/></svg>Profil</button>
+      </nav>
+      <button class="fab" id="fab" data-act="add" aria-label="Yemek ekle"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" data-act="close"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Yemek ekle">
+  <div class="shead"><h2>Ne yedin?</h2><button class="ic" data-act="close" aria-label="Kapat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="chips" id="mchips"></div>
+  <div class="seg tabs" id="stabs"><button data-stab="s" class="on">Listeden seç</button><button data-stab="c">Kendin gir</button></div>
+  <div class="sbody" id="pane-s">
+    <input id="q" type="search" placeholder="Ara: simit, tavuk, elma…" autocomplete="off">
+    <div id="flist"></div>
+  </div>
+  <div class="sbody" id="pane-c" hidden>
+    <div class="cf">
+      <label for="cn">Ad<input id="cn" type="text" placeholder="Örn. Annemin böreği" maxlength="40"></label>
+      <label for="ck">Kalori (kcal)<input id="ck" type="number" inputmode="numeric" min="1" max="5000" placeholder="0"></label>
+      <div class="grid3">
+        <label for="cp">Protein g<input id="cp" type="number" inputmode="decimal" min="0" placeholder="0"></label>
+        <label for="cc">Karb. g<input id="cc" type="number" inputmode="decimal" min="0" placeholder="0"></label>
+        <label for="cf">Yağ g<input id="cf" type="number" inputmode="decimal" min="0" placeholder="0"></label>
+      </div>
+      <button class="btn wide" id="addCustom">Ekle</button>
+    </div>
+  </div>
+  <div class="sfoot" id="foot" hidden></div>
+</div>
+
+<canvas id="fx"></canvas>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- veri ---------- */
+// [ad, emoji, porsiyon, kcal, protein, karbonhidrat, yağ]
+const FOODS=[
+['Haşlanmış yumurta','🥚','1 adet',78,6.3,0.6,5.3],
+['Beyaz peynir','🧀','30 g',80,5,1,6],
+['Zeytin','🫒','5 adet',40,0.3,2,4],
+['Tam buğday ekmeği','🍞','1 dilim',80,3,15,1],
+['Beyaz ekmek','🍞','1 dilim',70,2,14,1],
+['Bal','🍯','1 yemek kaşığı',64,0,17,0],
+['Simit','🥯','1 adet',290,9,52,5],
+['Menemen','🍳','1 porsiyon',220,11,8,16],
+['Poğaça','🥐','1 adet',270,6,28,15],
+['Yulaf ezmesi','🥣','1 kase',150,5,27,3],
+['Mercimek çorbası','🍲','1 kase',150,8,22,3],
+['Tavuk göğsü ızgara','🍗','150 g',247,46,0,5],
+['Pilav','🍚','1 porsiyon',210,4,40,4],
+['Makarna','🍝','1 porsiyon',280,10,52,3],
+['Kuru fasulye','🫘','1 porsiyon',250,14,35,6],
+['İskender','🥙','1 porsiyon',700,35,45,38],
+['Adana kebap','🍢','1 porsiyon',450,28,8,34],
+['Lahmacun','🫓','1 adet',260,12,32,9],
+['Döner dürüm','🌯','1 adet',520,28,48,24],
+['Köfte','🧆','4 adet',280,22,8,18],
+['Mantı','🥟','1 porsiyon',400,16,50,14],
+['Karnıyarık','🍆','1 porsiyon',320,12,18,22],
+['Balık ızgara','🐟','1 porsiyon',250,30,0,14],
+['Pizza','🍕','1 dilim',285,12,36,10],
+['Hamburger','🍔','1 adet',540,25,40,29],
+['Patates kızartması','🍟','1 porsiyon',365,4,48,17],
+['Salata','🥗','1 kase',70,2,8,3],
+['Cacık','🥒','1 kase',90,4,6,5],
+['Elma','🍎','1 adet',95,0.5,25,0.3],
+['Muz','🍌','1 adet',105,1.3,27,0.4],
+['Portakal','🍊','1 adet',62,1.2,15,0.2],
+['Üzüm','🍇','1 avuç',60,0.6,16,0.3],
+['Çilek','🍓','1 kase',50,1,12,0.5],
+['Badem','🌰','10 adet',70,2.6,2.5,6],
+['Ceviz','🌰','3 adet',130,3,3,13],
+['Fındık','🌰','1 avuç',180,4,5,17],
+['Çikolata','🍫','1 kare',55,0.7,6,3.5],
+['Dondurma','🍦','1 top',140,2,17,7],
+['Baklava','🥮','1 dilim',230,3,25,13],
+['Kuru kayısı','🍑','5 adet',100,1,26,0],
+['Yoğurt','🥛','1 kase',120,7,9,6],
+['Ayran','🥛','1 bardak',60,3,4,3],
+['Süt','🥛','1 bardak',120,8,12,5],
+['Kola','🥤','1 kutu',140,0,35,0],
+['Çay (şekerli)','🍵','1 bardak',25,0,6,0],
+['Türk kahvesi','☕','1 fincan',15,0.2,2,0.4],
+['Latte','☕','1 bardak',190,10,18,7],
+['Protein bar','🍫','1 adet',200,15,20,7]
+];
+const MEALS=[
+ {id:'k',name:'Kahvaltı',color:'var(--carb)'},
+ {id:'o',name:'Öğle',color:'var(--ember)'},
+ {id:'a',name:'Akşam',color:'var(--fat)'},
+ {id:'s',name:'Atıştırma',color:'var(--pro)'}
+];
+const MON=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+const DOW=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+const DOWF=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=k=>{const a=k.split('-').map(Number);return new Date(a[0],a[1]-1,a[2]);};
+const addDays=(k,n)=>{const d=parse(k);d.setDate(d.getDate()+n);return key(d);};
+const TODAY=()=>key(new Date());
+const fmt=n=>Math.round(n).toLocaleString('tr-TR');
+const r1=n=>Math.round(n*10)/10;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+
+/* ---------- durum ---------- */
+const KEY='kalorim-v1';
+let S, view=TODAY(), tab='today', lastAdded=null;
+
+function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r);}catch(e){}return null;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+function mk(name,meal,qty,sample){
+  const f=FOODS.find(x=>x[0]===name);
+  return {id:uid(),meal,name:f[0],emoji:f[1],serving:f[2],qty,kcal:r1(f[3]*qty),p:r1(f[4]*qty),c:r1(f[5]*qty),f:r1(f[6]*qty),s:sample?1:0};
+}
+const TPL=[
+ {k:[['Haşlanmış yumurta',2],['Beyaz peynir',1],['Zeytin',1],['Tam buğday ekmeği',2],['Çay (şekerli)',2]],
+  o:[['Tavuk göğsü ızgara',1],['Pilav',1],['Salata',1],['Ayran',1]],
+  a:[['Mercimek çorbası',1],['Makarna',1]],
+  s:[['Elma',1],['Badem',1]]},
+ {k:[['Yulaf ezmesi',1],['Muz',1],['Süt',1]],
+  o:[['Köfte',1],['Pilav',1],['Cacık',1]],
+  a:[['Balık ızgara',1],['Salata',1]],
+  s:[['Dondurma',1],['Çay (şekerli)',1]]},
+ {k:[['Simit',1],['Beyaz peynir',1],['Çay (şekerli)',2]],
+  o:[['Lahmacun',2],['Ayran',1]],
+  a:[['Kuru fasulye',1],['Pilav',1],['Yoğurt',1]],
+  s:[['Baklava',1],['Türk kahvesi',1]]}
+];
+function makeSample(){
+  const log={},water={},days=[],t=TODAY(),wat=[6,8,5,7,8,6,4];
+  for(let i=6;i>=0;i--){
+    const k=addDays(t,-i), tp=TPL[(6-i)%3], list=[];
+    ['k','o','a','s'].forEach(m=>{
+      if(i===0&&(m==='a'||m==='s'))return;
+      tp[m].forEach(x=>{
+        let q=x[1];
+        if(m==='a'&&i%3===0&&i>0)q=q*1.5;
+        list.push(mk(x[0],m,q,true));
+      });
+    });
+    log[k]=list;water[k]=wat[6-i];days.push(k);
+  }
+  return {log,water,days};
+}
+function defaults(){
+  const sm=makeSample();
+  return {goal:2200,profile:{sex:'m',age:28,h:175,w:75,act:1.55,aim:0},log:sm.log,water:sm.water,cel:{},sample:true,sampleDays:sm.days};
+}
+S=load()||defaults();
+S.log=S.log||{};S.water=S.water||{};S.cel=S.cel||{};S.profile=S.profile||defaults().profile;S.goal=S.goal||2200;
+
+function dayTotals(k){const t={kcal:0,p:0,c:0,f:0};(S.log[k]||[]).forEach(e=>{t.kcal+=e.kcal;t.p+=e.p;t.c+=e.c;t.f+=e.f;});return t;}
+function macroGoals(){return {p:Math.round(S.goal*.3/4),c:Math.round(S.goal*.45/4),f:Math.round(S.goal*.25/9)};}
+function streak(){let k=TODAY(),n=0;if(!(S.log[k]||[]).length)k=addDays(k,-1);while((S.log[k]||[]).length){n++;k=addDays(k,-1);}return n;}
+
+/* ---------- yardımcılar ---------- */
+function countTo(el,to,dur){
+  dur=dur||900;
+  const from=+el.dataset.v||0;el.dataset.v=to;
+  if(reduce||from===to){el.textContent=fmt(to);return;}
+  const t0=performance.now();
+  (function f(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.textContent=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(f);})(t0);
+}
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
+function bump(){const w=$('#ringwrap');if(reduce||!w.animate)return;w.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:450,easing:'cubic-bezier(.3,1.6,.4,1)'});}
+function fly(emoji,from){
+  if(reduce||!from)return bump();
+  const r=$('#ringwrap').getBoundingClientRect(),f=from.getBoundingClientRect();
+  const x0=f.left+f.width/2,y0=f.top+f.height/2,x1=r.left+r.width/2,y1=Math.max(60,r.top+r.height/2);
+  const el=document.createElement('div');el.className='fly';el.textContent=emoji;document.body.appendChild(el);
+  const a=el.animate([
+    {transform:`translate(${x0}px,${y0}px) scale(1) rotate(0deg)`,opacity:1},
+    {transform:`translate(${(x0+x1)/2-50}px,${Math.min(y0,y1)-90}px) scale(1.7) rotate(-18deg)`,opacity:1,offset:.5},
+    {transform:`translate(${x1}px,${y1}px) scale(.3) rotate(10deg)`,opacity:.1}
+  ],{duration:850,easing:'cubic-bezier(.3,.7,.3,1)'});
+  a.onfinish=()=>{el.remove();bump();};
+}
+function confetti(n){
+  if(reduce)return;
+  const c=$('#fx'),x=c.getContext('2d'),dpr=window.devicePixelRatio||1;
+  c.width=innerWidth*dpr;c.height=innerHeight*dpr;x.scale(dpr,dpr);
+  const cols=['#ff7a45','#ff3d7f','#ffc857','#4cc9f0','#b794ff','#5ee6a8'];
+  const P=[];
+  for(let i=0;i<n;i++)P.push({x:innerWidth/2+(Math.random()-.5)*80,y:innerHeight*.38,vx:(Math.random()-.5)*14,vy:-Math.random()*13-4,w:5+Math.random()*6,h:3+Math.random()*5,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length]});
+  const t0=performance.now();
+  (function f(t){
+    const el=t-t0;x.clearRect(0,0,innerWidth,innerHeight);
+    P.forEach(p=>{p.vy+=.28;p.vx*=.992;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.globalAlpha=Math.max(0,1-el/2600);x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore();});
+    if(el<2600)requestAnimationFrame(f);else x.clearRect(0,0,innerWidth,innerHeight);
+  })(t0);
+}
+function checkCel(){
+  const c=(S.cel[view]=S.cel[view]||{}),t=dayTotals(view).kcal,w=S.water[view]||0;
+  if(!c.k&&t>=S.goal*.9&&t<=S.goal*1.1){c.k=1;setTimeout(()=>{confetti(150);toast('Tam hedefte, harika gidiyorsun!');},700);}
+  else if(!c.w&&w>=8){c.w=1;confetti(100);toast('8 bardak su tamam!');}
+  save();
+}
+
+/* ---------- çizim ---------- */
+const C=578.05;
+function renderHeader(){
+  const h=new Date().getHours();
+  $('#hello').textContent=h<6?'İyi geceler':h<12?'Günaydın':h<18?'İyi günler':'İyi akşamlar';
+  const top=$('#top');
+  if(tab==='today'){
+    top.classList.remove('plain');
+    const t=TODAY();
+    let l;
+    if(view===t)l='Bugün';else if(view===addDays(t,-1))l='Dün';
+    else{const d=parse(view);l=d.getDate()+' '+MON[d.getMonth()]+', '+DOW[d.getDay()];}
+    $('#dlabel').textContent=l;
+    $('#nextBtn').disabled=view>=t;
+  }else{
+    top.classList.add('plain');
+    $('#dlabel').textContent=tab==='week'?'Son 7 gün':'Profil';
+  }
+  $('#sn').textContent=streak();
+}
+function renderRing(){
+  const t=dayTotals(view),pct=Math.min(1,t.kcal/S.goal);
+  const p=$('#prg');p.style.strokeDashoffset=C*(1-pct);p.style.opacity=pct>0?1:0;
+  $('#ringwrap').classList.toggle('over',t.kcal>S.goal);
+  countTo($('#eaten'),t.kcal);
+  $('#goal').textContent=fmt(S.goal);
+  const d=S.goal-t.kcal,rm=$('#remain');
+  rm.classList.toggle('over',d<0);
+  rm.innerHTML=d>=0?`<b>${fmt(d)}</b>kcal kaldı`:`<b>${fmt(-d)}</b>kcal fazla`;
+}
+function renderMacros(){
+  const t=dayTotals(view),g=macroGoals();
+  ['p','c','f'].forEach(k=>{
+    $('#v-'+k).textContent=fmt(t[k]);
+    $('#g-'+k).textContent='/ '+g[k]+' g';
+    $('#b-'+k).style.width=Math.min(100,t[k]/g[k]*100)+'%';
+  });
+}
+function renderWater(){
+  const n=S.water[view]||0;
+  $('#cups').innerHTML=Array.from({length:8},(_,i)=>`<button class="cup${i<n?' on':''}" data-act="cup" data-i="${i}" aria-label="${i+1}. bardak" aria-pressed="${i<n}"><i></i></button>`).join('');
+  $('#wtxt').textContent=(n*0.25).toLocaleString('tr-TR')+' / 2 litre';
+}
+function itemRow(e){
+  const q=e.qty===1?e.serving:`${e.serving} × ${e.qty.toLocaleString('tr-TR')}`;
+  return `<div class="item${e.id===lastAdded?' new':''}" data-id="${e.id}"><span class="em">${e.emoji}</span><div class="im"><b>${esc(e.name)}</b><small>${esc(q)} · P ${fmt(e.p)} · K ${fmt(e.c)} · Y ${fmt(e.f)}</small></div><span class="ik">${fmt(e.kcal)}</span><button class="del" data-act="del" data-id="${e.id}" aria-label="${esc(e.name)} kaydını sil">×</button></div>`;
+}
+function renderMeals(){
+  const L=S.log[view]||[];
+  $('#meals').innerHTML=MEALS.map(m=>{
+    const it=L.filter(e=>e.meal===m.id),sum=it.reduce((a,e)=>a+e.kcal,0);
+    return `<section class="meal"><div class="mh"><span class="dot" style="background:${m.color}"></span><h3>${m.name}</h3><span class="ms">${fmt(sum)} kcal</span><button class="ic sm" data-act="add" data-meal="${m.id}" aria-label="${m.name} için ekle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>${it.length?it.map(itemRow).join(''):`<button class="empty" data-act="add" data-meal="${m.id}">Henüz bir şey yok. Eklemek için dokun.</button>`}</section>`;
+  }).join('');
+  lastAdded=null;
+}
+function renderToday(){
+  $('#sample').hidden=!S.sample;
+  renderHeader();renderRing();renderMacros();renderWater();renderMeals();
+}
+function renderWeek(){
+  const t=TODAY(),days=Array.from({length:7},(_,i)=>addDays(t,i-6));
+  const tot=days.map(k=>dayTotals(k).kcal);
+  const max=Math.max(S.goal*1.25,...tot);
+  $('#plot').innerHTML=`<div class="cols">${days.map((k,i)=>{
+    const v=tot[i],h=v?Math.max(4,v/max*100):0;
+    return `<button class="col${k===t?' today':''}" data-act="goto" data-k="${k}" aria-label="${k} tarihine git, ${fmt(v)} kilokalori"><div class="track">${v?`<span class="val" style="--h:${h}%">${fmt(v)}</span><i class="bar2${v>S.goal*1.05?' over':''}" style="--h:${h}%;--i:${i}"></i>`:`<i class="bar2 none" style="--i:${i}"></i>`}</div><span class="lbl">${DOW[parse(k).getDay()]}</span></button>`;
+  }).join('')}</div><div class="goalline" style="--r:${S.goal/max}"><span>hedef</span></div>`;
+  const filled=tot.filter(v=>v>0),avg=filled.length?filled.reduce((a,b)=>a+b,0)/filled.length:0;
+  const near=tot.filter(v=>v>=S.goal*.8&&v<=S.goal*1.05).length;
+  const wAvg=days.reduce((a,k)=>a+(S.water[k]||0),0)/7*0.25;
+  $('#stats').innerHTML=`<div class="stat"><b>${fmt(avg)}</b><small>ortalama kcal</small></div><div class="stat"><b>${near}/7</b><small>hedefe yakın gün</small></div><div class="stat"><b>${wAvg.toLocaleString('tr-TR',{maximumFractionDigits:1})} L</b><small>günlük su</small></div>`;
+}
+function renderMe(){
+  const p=S.profile;
+  $('#mgoal').textContent=fmt(S.goal);
+  $$('#sex button').forEach(b=>b.classList.toggle('on',b.dataset.sex===p.sex));
+  $('#pa').value=p.age;$('#ph').value=p.h;$('#pw').value=p.w;
+  $('#pact').value=String(p.act);$('#paim').value=String(p.aim);
+}
+function setTab(t){
+  tab=t;
+  ['today','week','me'].forEach(n=>{$('#v-'+n).hidden=n!==t;});
+  $$('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  renderHeader();
+  if(t==='today')renderToday();
+  if(t==='week')renderWeek();
+  if(t==='me')renderMe();
+  window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+}
+
+/* ---------- ekleme sayfası ---------- */
+let sh={tab:'s',meal:'k',sel:null,qty:1};
+function guessMeal(){const h=new Date().getHours();return h<11?'k':h<15?'o':h<18?'s':'a';}
+function chips(){
+  $('#mchips').innerHTML=MEALS.map(m=>`<button class="chip${sh.meal===m.id?' on':''}" style="--c:${m.color}" data-act="meal" data-m="${m.id}">${m.name}</button>`).join('');
+}
+function flist(){
+  const q=$('#q').value.trim().toLocaleLowerCase('tr');
+  const L=FOODS.map((f,i)=>({f,i})).filter(o=>!q||o.f[0].toLocaleLowerCase('tr').includes(q));
+  $('#flist').innerHTML=L.length?L.map(o=>`<button class="frow${sh.sel===o.i?' on':''}" data-act="pick" data-i="${o.i}"><span class="em">${o.f[1]}</span><span class="im"><b>${o.f[0]}</b><small>${o.f[2]} · P ${fmt(o.f[4])} · K ${fmt(o.f[5])} · Y ${fmt(o.f[6])}</small></span><span class="ik">${o.f[3]}</span></button>`).join(''):'<p class="hint" style="padding:10px 8px">Bulunamadı. "Kendin gir" sekmesinden ekleyebilirsin.</p>';
+}
+function foot(){
+  const f=$('#foot');
+  if(sh.tab!=='s'||sh.sel===null){f.hidden=true;return;}
+  const x=FOODS[sh.sel];
+  f.hidden=false;
+  f.innerHTML=`<div class="who"><b>${x[0]}</b><small>${x[2]}</small></div><div class="qty"><button class="ic" data-act="qminus" aria-label="Azalt">−</button><b>${sh.qty.toLocaleString('tr-TR')}</b><button class="ic" data-act="qplus" aria-label="Artır">+</button></div><button class="btn" data-act="addfood" id="addFood">Ekle · ${fmt(x[3]*sh.qty)}</button>`;
+}
+function openSheet(meal){
+  sh={tab:'s',meal:meal||guessMeal(),sel:null,qty:1};
+  $('#q').value='';['cn','ck','cp','cc','cf'].forEach(i=>{$('#'+i).value='';});
+  setStab('s');chips();flist();foot();
+  $('#sheet').classList.add('open');$('#scrim').classList.add('open');
+}
+function closeSheet(){$('#sheet').classList.remove('open');$('#scrim').classList.remove('open');}
+function setStab(t){
+  sh.tab=t;
+  $$('#stabs button').forEach(b=>b.classList.toggle('on',b.dataset.stab===t));
+  $('#pane-s').hidden=t!=='s';$('#pane-c').hidden=t!=='c';
+  foot();
+}
+function addEntry(e,from){
+  if(tab!=='today')setTab('today');
+  (S.log[view]=S.log[view]||[]).push(e);
+  lastAdded=e.id;save();closeSheet();renderToday();
+  setTimeout(()=>{fly(e.emoji,from);checkCel();},260);
+}
+
+/* ---------- olaylar ---------- */
+document.addEventListener('click',ev=>{
+  const tb=ev.target.closest('[data-tab]');
+  if(tb){setTab(tb.dataset.tab);return;}
+  const sb=ev.target.closest('[data-stab]');
+  if(sb){setStab(sb.dataset.stab);return;}
+  const sx=ev.target.closest('[data-sex]');
+  if(sx){S.profile.sex=sx.dataset.sex;save();renderMe();return;}
+  const el=ev.target.closest('[data-act]');
+  if(!el)return;
+  const a=el.dataset.act;
+  if(a==='add'){openSheet(el.dataset.meal);}
+  else if(a==='close'){closeSheet();}
+  else if(a==='prev'){view=addDays(view,-1);renderToday();}
+  else if(a==='next'){if(view<TODAY()){view=addDays(view,1);renderToday();}}
+  else if(a==='goto'){view=el.dataset.k;setTab('today');}
+  else if(a==='cup'){
+    const i=+el.dataset.i,n=S.water[view]||0;
+    S.water[view]=n===i+1?i:i+1;save();renderWater();
+    if(S.water[view]>n)checkCel();
+  }
+  else if(a==='del'){
+    const id=el.dataset.id,row=el.closest('.item');
+    if(row)row.classList.add('out');
+    setTimeout(()=>{S.log[view]=(S.log[view]||[]).filter(e=>e.id!==id);save();renderToday();},reduce?0:420);
+  }
+  else if(a==='meal'){sh.meal=el.dataset.m;chips();}
+  else if(a==='pick'){const i=+el.dataset.i;sh.sel=sh.sel===i?null:i;sh.qty=1;flist();foot();}
+  else if(a==='qminus'){sh.qty=Math.max(.5,sh.qty-.5);foot();}
+  else if(a==='qplus'){sh.qty=Math.min(10,sh.qty+.5);foot();}
+  else if(a==='addfood'){
+    const x=FOODS[sh.sel],q=sh.qty;
+    addEntry({id:uid(),meal:sh.meal,name:x[0],emoji:x[1],serving:x[2],qty:q,kcal:r1(x[3]*q),p:r1(x[4]*q),c:r1(x[5]*q),f:r1(x[6]*q),s:0},el);
+  }
+  else if(a==='gminus'){S.goal=Math.max(1000,S.goal-50);save();renderMe();}
+  else if(a==='gplus'){S.goal=Math.min(6000,S.goal+50);save();renderMe();}
+  else if(a==='calc'){calc();}
+  else if(a==='clear-sample'){clearSample();}
+  else if(a==='reset'){resetAll(el);}
+});
+$('#addCustom').addEventListener('click',ev=>{
+  const k=+$('#ck').value;
+  if(!(k>0)){const i=$('#ck');i.classList.remove('shake');void i.offsetWidth;i.classList.add('shake');i.focus();return;}
+  addEntry({id:uid(),meal:sh.meal,name:$('#cn').value.trim()||'Özel yemek',emoji:'🍽️',serving:'1 porsiyon',qty:1,kcal:Math.round(k),p:r1(+$('#cp').value||0),c:r1(+$('#cc').value||0),f:r1(+$('#cf').value||0),s:0},ev.currentTarget);
+});
+$('#q').addEventListener('input',()=>{sh.sel=null;flist();foot();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
+
+function readProfile(){
+  const p=S.profile;
+  p.age=+$('#pa').value||p.age;p.h=+$('#ph').value||p.h;p.w=+$('#pw').value||p.w;
+  p.act=+$('#pact').value;p.aim=+$('#paim').value;
+}
+['pa','ph','pw','pact','paim'].forEach(id=>$('#'+id).addEventListener('change',()=>{readProfile();save();}));
+function calc(){
+  readProfile();const p=S.profile;
+  const bmr=10*p.w+6.25*p.h-5*p.age+(p.sex==='m'?5:-161);
+  const tdee=bmr*p.act;
+  S.goal=Math.min(6000,Math.max(1200,Math.round((tdee+p.aim)/10)*10));
+  save();renderMe();
+  $('#calcinfo').textContent=`Bazal metabolizman yaklaşık ${fmt(bmr)} kcal, günlük harcaman yaklaşık ${fmt(tdee)} kcal. Hedefin ${fmt(S.goal)} kcal oldu.`;
+  const g=$('#mgoal');if(g.animate&&!reduce)g.animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],{duration:500,easing:'cubic-bezier(.3,1.6,.4,1)'});
+}
+function clearSample(){
+  Object.keys(S.log).forEach(k=>{S.log[k]=S.log[k].filter(e=>!e.s);});
+  (S.sampleDays||[]).forEach(k=>{delete S.water[k];});
+  S.sample=false;S.sampleDays=[];S.cel={};save();
+  if(tab==='today')renderToday();else if(tab==='week')renderWeek();
+  toast('Örnek veriler temizlendi');
+}
+let resetT;
+function resetAll(btn){
+  if(btn.dataset.sure){
+    clearTimeout(resetT);
+    S={goal:2200,profile:S.profile,log:{},water:{},cel:{},sample:false,sampleDays:[]};save();
+    btn.dataset.sure='';btn.textContent='Hepsini sıfırla';renderMe();toast('Tüm kayıtlar silindi');return;
+  }
+  btn.dataset.sure='1';btn.textContent='Emin misin? Tekrar dokun';
+  resetT=setTimeout(()=>{btn.dataset.sure='';btn.textContent='Hepsini sıfırla';},3200);
+}
+
+/* ---------- başlat ---------- */
+renderToday();renderMe();
+// halka yüklenirken sıfırdan dolsun
+const p0=$('#prg');const target=p0.style.strokeDashoffset;p0.style.transition='none';p0.style.strokeDashoffset=C;
+requestAnimationFrame(()=>requestAnimationFrame(()=>{p0.style.transition='';p0.style.strokeDashoffset=target;}));
+})();
+</script>
+
+<script>
+try{var SB=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.StatusBar;if(SB){SB.setBackgroundColor({color:"#0d0e14"});SB.setStyle({style:"DARK"});}}catch(e){}
+</script>
+</body>
+</html>
